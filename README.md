@@ -1,6 +1,6 @@
-# Discord Speech to Text Bot 🤖🔊
+# Discord Speech to Text Bot 🎤
 
-A Discord bot that integrates with the Bing Speech Services API
+A Discord bot that uses the Bing Speech to Text API to transcribe what's said.
 
 For a simpler example see: [discord-bot-example](https://glitch.com/~discord-bot-example)
 
