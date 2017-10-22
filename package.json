@@ -6,13 +6,15 @@
     "start": "node server.js"
   },
   "dependencies": {
-    "eris": "^0.7.2",
     "lodash": "^4.17.4",
-    "ms-bing-speech-service": "^1.2.1",
-    "emit-stream": "^0.1.2",
-    "stream-buffers": "^3.0.1"
+    "ms-bing-speech-service": "^1.3.2",
+    "discord.js": "^11.2.1",
+    "node-opus": "^0.2.7",
+    "uws": "^8.14.1",
+    "sodium": "^2.0.1",
+    "ffmpeg-binaries": "^3.2.2"
   },
   "engines": {
-    "node": "8.x"
+    "node": "^8"
   }
 }
