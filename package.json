@@ -6,7 +6,7 @@
     "start": "node bot.js"
   },
   "dependencies": {
-    "ms-bing-speech-service": "^2.0.0",
+    "ms-bing-speech-service": "^2.0.1",
     "eris": "^0.8.2",
     "pcm-util": "^3.0.0"
   },
