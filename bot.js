@@ -10,6 +10,7 @@ const recogniser = new SpeechService({
   language: 'en-US',
   subscriptionKey: process.env.BING_SPEECH_API_KEY,
 });
+const utterances = {};
 
 bot.on('ready', () => {
   console.log('> Bot ready');
@@ -23,28 +24,21 @@ bot.on('messageCreate', message => {
       bot
         .joinVoiceChannel(message.member.voiceState.channelID)
         .then(connection => {
+          // We've connected to the uses channel
           message.addReaction('👍');
           console.log('>> Channel joined');
-          const listener = connection.receive('pcm');
-          listener.on('data', audioBuffer => {
-            if (audioBuffer.toJSON().data.some(n => n)) {
-              const currentFormat = pcm.format(audioBuffer);
-              const formattedBuffer = Buffer.from(
-                pcm.convert(
-                  audioBuffer,
-                  currentFormat,
-                  pcm.normalize({
-                    channels: 1,
-                    bitDepth: 16,
-                    sampleRate: 16000,
-                  }),
-                ),
-              );
-              console.log(pcm.format(formattedBuffer));
-              console.log('>> Sending audio', formattedBuffer);
-              recogniser.sendFile(formattedBuffer);
-            }
+
+          connection.on('speakingStart', userId => {
+            utterances[userId] = [];
           });
+          connection.on('speakingEnd', userId => {
+            // sort the buffers
+            // turn them into a stream
+            // recogniser.sendStream(stream)
+          });
+          // Start recieving the audio data
+          const listener = connection.receive('pcm');
+          listener.on('data', audioBuffer => {});
         })
         .catch(err => {
           console.log(err);
@@ -55,6 +49,8 @@ bot.on('messageCreate', message => {
     }
   }
 });
+
+// Start connect to recogniser service
 recogniser
   .start()
   .then(a => {

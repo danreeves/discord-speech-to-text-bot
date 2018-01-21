@@ -16,5 +16,9 @@
   },
   "devDependencies": {
     "prettier": "^1.10.2"
+  },
+  "prettier": {
+    "singleQuote": true,
+    "trailingComma": "es5"
   }
 }
