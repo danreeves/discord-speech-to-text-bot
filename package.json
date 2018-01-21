@@ -6,8 +6,9 @@
     "start": "node bot.js"
   },
   "dependencies": {
-    "ms-bing-speech-service": "^2.0.1",
+    "dotenv": "^4.0.0",
     "eris": "^0.8.2",
+    "ms-bing-speech-service": "^2.0.1",
     "pcm-util": "^3.0.0"
   },
   "engines": {

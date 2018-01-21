@@ -1,3 +1,4 @@
+require('dotenv').config();
 const Eris = require('eris');
 const SpeechService = require('ms-bing-speech-service');
 const pcm = require('pcm-util');
@@ -11,18 +12,19 @@ const recogniser = new SpeechService({
 });
 
 bot.on('ready', () => {
-  console.log('🤖 Read');
+  console.log('> Bot ready');
 });
 
 bot.on('messageCreate', message => {
   if (message.content === '/join') {
-    // Only try to join the sender's voice channel if they are in one themselves
+    // Only try to join the sender's voice channel
+    // if they are in one themselves
     if (message.member.voiceState.channelID) {
       bot
         .joinVoiceChannel(message.member.voiceState.channelID)
         .then(connection => {
           message.addReaction('👍');
-          console.log('Channel joined');
+          console.log('>> Channel joined');
           const listener = connection.receive('pcm');
           listener.on('data', audioBuffer => {
             if (audioBuffer.toJSON().data.some(n => n)) {
@@ -39,7 +41,7 @@ bot.on('messageCreate', message => {
                 ),
               );
               console.log(pcm.format(formattedBuffer));
-              console.log('💌 Sending audi', formattedBuffer);
+              console.log('>> Sending audio', formattedBuffer);
               recogniser.sendFile(formattedBuffer);
             }
           });
@@ -56,10 +58,10 @@ bot.on('messageCreate', message => {
 recogniser
   .start()
   .then(a => {
-    console.log('🗣️ Ready');
-    recogniser.on('recognition', e => {
+    console.log('> Recogniser ready');
+    recogniser.on('repognition', e => {
       console.log(e);
     });
     bot.connect();
   })
-  .catch(console.error);
+  .catch(error => console.error('> Error connecting to Bing', error));
