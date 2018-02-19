@@ -1,63 +1,80 @@
 require('dotenv').config();
 const Eris = require('eris');
 const SpeechService = require('ms-bing-speech-service');
-const pcm = require('pcm-util');
 
-console.log('Starting...');
+async function main() {
+  console.log('Starting...');
 
-const bot = new Eris(process.env.DISCORD_BOT_TOKEN);
-const recogniser = new SpeechService({
-  language: 'en-US',
-  subscriptionKey: process.env.BING_SPEECH_API_KEY,
-});
-const utterances = {};
+  const bot = new Eris(process.env.DISCORD_BOT_TOKEN);
+  const recogniser = new SpeechService({
+    language: 'en-US',
+    subscriptionKey: process.env.BING_SPEECH_API_KEY,
+  });
+  const utterances = {};
 
-bot.on('ready', () => {
-  console.log('> Bot ready');
-});
+  bot.on('ready', () => {
+    console.log('> Bot ready');
+  });
 
-bot.on('messageCreate', message => {
-  if (message.content === '/join') {
-    // Only try to join the sender's voice channel
-    // if they are in one themselves
-    if (message.member.voiceState.channelID) {
-      bot
-        .joinVoiceChannel(message.member.voiceState.channelID)
-        .then(connection => {
+  bot.on('messageCreate', async message => {
+    if (message.content === '/listen') {
+      // Only try to join the sender's voice channel
+      // if they are in one themselves
+      if (message.member.voiceState.channelID) {
+        const { name: channelName } = bot.getChannel(
+          message.member.voiceState.channelID
+        );
+        const connection = await bot.joinVoiceChannel(
+          message.member.voiceState.channelID
+        );
+        if (connection) {
           // We've connected to the uses channel
           message.addReaction('👍');
-          console.log('>> Channel joined');
+          console.log(`>> Joined: ${channelName}`);
 
           connection.on('speakingStart', userId => {
             utterances[userId] = [];
           });
           connection.on('speakingEnd', userId => {
-            // sort the buffers
-            // turn them into a stream
-            // recogniser.sendStream(stream)
+            console.log(userId);
+            // Sort the buffers
+            // Turn them into a stream
+            // Recogniser.sendStream(stream)
           });
           // Start recieving the audio data
           const listener = connection.receive('pcm');
-          listener.on('data', audioBuffer => {});
-        })
-        .catch(err => {
-          console.log(err);
+          listener.on('data', audioBuffer => {
+            console.log(audioBuffer);
+          });
+        } else {
           message.addReaction('👎');
-        });
-    } else {
-      message.addReaction('👎');
+        }
+      } else {
+        message.addReaction('👎');
+      }
     }
-  }
-});
+    if (message.content === '/stop') {
+      if (message.member.voiceState.channelID) {
+        try {
+          bot.leaveVoiceChannel(message.member.voiceState.channelID);
+        } catch (err) {
+          // This errors because receieveStream has no destroy fn
+        }
+      }
+    }
+  });
 
-// Start connect to recogniser service
-recogniser
-  .start()
-  .then(a => {
+  // Start recogniser service
+  try {
+    await recogniser.start();
     console.log('> Recogniser ready');
     recogniser.on('repognition', e => {
       console.log(e);
     });
     bot.connect();
-  })
-  .catch(error => console.error('> Error connecting to Bing', error));
+  } catch (error) {
+    console.error('> Error connecting to Bing', error);
+  }
+}
+
+main();

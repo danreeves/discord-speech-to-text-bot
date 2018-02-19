@@ -6,19 +6,31 @@
     "start": "node bot.js"
   },
   "dependencies": {
-    "dotenv": "^4.0.0",
-    "eris": "^0.8.2",
-    "ms-bing-speech-service": "^2.0.1",
-    "pcm-util": "^3.0.0"
+    "bufferutil": "^3.0.3",
+    "dotenv": "^5.0.0",
+    "eris": "^0.8.4",
+    "eventemitter3": "^3.0.1",
+    "ms-bing-speech-service": "^2.0.2",
+    "node-opus": "^0.2.7",
+    "sodium-native": "^2.1.4",
+    "uws": "^9.14.0",
+    "zlib-sync": "^0.1.4"
   },
   "engines": {
     "node": "9"
   },
   "devDependencies": {
-    "prettier": "^1.10.2"
+    "prettier": "^1.10.2",
+    "xo": "^0.20.3"
   },
   "prettier": {
     "singleQuote": true,
-    "trailingComma": "es5"
+    "trailingComma": "es5",
+    "tabWidth": 2,
+    "useTabs": false,
+    "bracketSpacing": true
+  },
+  "xo": {
+    "prettier": true
   }
 }
