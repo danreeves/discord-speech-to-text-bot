@@ -7,30 +7,31 @@
   },
   "dependencies": {
     "bufferutil": "^3.0.3",
+    "discord.js": "github:discordjs/discord.js",
     "dotenv": "^5.0.0",
-    "eris": "^0.8.4",
-    "eventemitter3": "^3.0.1",
+    "erlpack": "github:hammerandchisel/erlpack",
+    "ffmpeg-binaries": "^3.2.2-3",
     "ms-bing-speech-service": "^2.0.2",
     "node-opus": "^0.2.7",
-    "sodium-native": "^2.1.4",
-    "uws": "^9.14.0",
-    "zlib-sync": "^0.1.4"
+    "ogg": "^1.2.5",
+    "prism-media": "^0.1.0",
+    "sodium": "^2.0.3",
+    "speaker": "^0.4.0",
+    "uws": "^9.14.0"
   },
   "engines": {
     "node": "9"
   },
   "devDependencies": {
+    "eslint-config-prettier": "^2.9.0",
     "prettier": "^1.10.2",
     "xo": "^0.20.3"
   },
   "prettier": {
     "singleQuote": true,
-    "trailingComma": "es5",
-    "tabWidth": 2,
-    "useTabs": false,
-    "bracketSpacing": true
+    "trailingComma": "es5"
   },
   "xo": {
-    "prettier": true
+    "extends": "prettier"
   }
 }

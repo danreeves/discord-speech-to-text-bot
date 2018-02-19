@@ -1,77 +1,132 @@
 require('dotenv').config();
-const Eris = require('eris');
+const { Transform } = require('stream');
+const fs = require('fs');
+const Discord = require('discord.js');
 const SpeechService = require('ms-bing-speech-service');
+const prism = require('prism-media');
+
+const transcoder = new prism.FFmpeg({
+  args: [
+    '-analyzeduration',
+    '0',
+    '-loglevel',
+    '0',
+    '-f',
+    's16le',
+    '-ar',
+    '16000',
+    '-ac',
+    '1',
+    '-acodec',
+    'pcm_s16le',
+  ],
+});
 
 async function main() {
   console.log('Starting...');
 
-  const bot = new Eris(process.env.DISCORD_BOT_TOKEN);
+  const bot = new Discord.Client();
   const recogniser = new SpeechService({
     language: 'en-US',
     subscriptionKey: process.env.BING_SPEECH_API_KEY,
   });
-  const utterances = {};
 
   bot.on('ready', () => {
     console.log('> Bot ready');
   });
 
-  bot.on('messageCreate', async message => {
+  bot.on('message', async message => {
     if (message.content === '/listen') {
-      // Only try to join the sender's voice channel
-      // if they are in one themselves
-      if (message.member.voiceState.channelID) {
-        const { name: channelName } = bot.getChannel(
-          message.member.voiceState.channelID
-        );
-        const connection = await bot.joinVoiceChannel(
-          message.member.voiceState.channelID
-        );
+      if (message.member.voiceChannel) {
+        const channel = message.member.voiceChannel;
+        const { name: channelName } = channel;
+        const connection = await channel.join();
+
         if (connection) {
-          // We've connected to the uses channel
-          message.addReaction('👍');
+          message.react('👍');
           console.log(`>> Joined: ${channelName}`);
 
-          connection.on('speakingStart', userId => {
-            utterances[userId] = [];
+          connection.on('authenticated', console.log);
+          connection.on('debug', console.log);
+          connection.on('disconnect', console.log);
+          connection.on('error', console.log);
+          connection.on('failed', console.log);
+          connection.on('newSession', console.log);
+          connection.on('ready', console.log);
+          connection.on('reconnecting', console.log);
+          connection.on('warn', console.log);
+
+          const receiver = connection.createReceiver();
+          receiver.on('debug', console.log);
+
+          const voiceStream = receiver.createStream(message.member, {
+            mode: 'opus',
           });
-          connection.on('speakingEnd', userId => {
-            console.log(userId);
-            // Sort the buffers
-            // Turn them into a stream
-            // Recogniser.sendStream(stream)
-          });
-          // Start recieving the audio data
-          const listener = connection.receive('pcm');
-          listener.on('data', audioBuffer => {
-            console.log(audioBuffer);
+
+          let utteranceStream;
+
+          connection.on('speaking', async (user, isSpeaking) => {
+            if (isSpeaking) {
+              console.log(`${user.tag} started speaking`);
+              // Create a temp stream to store the current utterance
+              utteranceStream = new Transform({
+                transform(chunk, encoding, callback) {
+                  this.push(chunk);
+                  callback();
+                },
+              });
+              // Start sending the voice stream there
+              voiceStream.pipe(utteranceStream);
+            } else {
+              console.log(`${user.tag} stopped speaking`);
+              if (utteranceStream) {
+                // Stop sending the voice stream into the utterance
+                voiceStream.unpipe(utteranceStream);
+                // End the utterance stream
+                utteranceStream.end();
+                // Echo through Discord
+                connection.play(utteranceStream, {
+                  type: 'opus',
+                  volume: false,
+                });
+                try {
+                  const resp = await recogniser.sendStream(utteranceStream);
+                  console.log('bing resp', resp);
+                  // console.log(recogniser.telemetry);
+                } catch (err) {
+                  console.log('bing err', err);
+                }
+              }
+            }
           });
         } else {
-          message.addReaction('👎');
+          message.react('👎');
         }
       } else {
-        message.addReaction('👎');
+        message.react('👎');
       }
     }
     if (message.content === '/stop') {
-      if (message.member.voiceState.channelID) {
-        try {
-          bot.leaveVoiceChannel(message.member.voiceState.channelID);
-        } catch (err) {
-          // This errors because receieveStream has no destroy fn
-        }
+      if (message.member.voiceChannel) {
+        const channel = message.member.voiceChannel;
+        const { name: channelName } = channel;
+        console.log(`>> Leaving: ${channelName}`);
+        channel.leave();
       }
     }
   });
+
+  recogniser.on('recognition', e => {
+    console.log(e);
+  });
+
+  // Start the Discord bot
+  bot.login(process.env.DISCORD_BOT_TOKEN);
 
   // Start recogniser service
   try {
     await recogniser.start();
     console.log('> Recogniser ready');
-    recogniser.on('repognition', e => {
-      console.log(e);
-    });
-    bot.connect();
   } catch (error) {
     console.error('> Error connecting to Bing', error);
   }
