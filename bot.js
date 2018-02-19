@@ -1,26 +1,7 @@
 require('dotenv').config();
 const { Transform } = require('stream');
-const fs = require('fs');
 const Discord = require('discord.js');
 const SpeechService = require('ms-bing-speech-service');
-const prism = require('prism-media');
-
-const transcoder = new prism.FFmpeg({
-  args: [
-    '-analyzeduration',
-    '0',
-    '-loglevel',
-    '0',
-    '-f',
-    's16le',
-    '-ar',
-    '16000',
-    '-ac',
-    '1',
-    '-acodec',
-    'pcm_s16le',
-  ],
-});
 
 async function main() {
   console.log('Starting...');
