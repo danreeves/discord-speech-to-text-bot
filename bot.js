@@ -1,7 +1,15 @@
 require('dotenv').config();
+const fs = require('fs');
+const path = require('path');
 const { Transform } = require('stream');
 const Discord = require('discord.js');
 const SpeechService = require('ms-bing-speech-service');
+const ffmpeg = require('fluent-ffmpeg');
+
+ffmpeg.setFfmpegPath(path.resolve(__dirname, 'node_modules', '.bin', 'ffmpeg'));
+ffmpeg.setFfprobePath(
+  path.resolve(__dirname, 'node_modules', '.bin', 'ffprobe')
+);
 
 async function main() {
   console.log('Starting...');
@@ -40,46 +48,65 @@ async function main() {
           const receiver = connection.createReceiver();
           receiver.on('debug', console.log);
 
-          const voiceStream = receiver.createStream(message.member, {
-            mode: 'opus',
+          const voiceStream = receiver.createOpusStream(message.member.user);
+          voiceStream.on('data', chunk => {
+            console.log(`Received ${chunk.length} bytes of data.`);
           });
 
-          let utteranceStream;
+          try {
+            const out = fs.createWriteStream('./audio.wav');
+            ffmpeg(voiceStream)
+              .inputFormat('s32le')
+              .audioFrequency(16000)
+              .audioChannels(1)
+              .audioCodec('pcm_s16le')
+              .format('s16le')
+              .on('error', console.error.bind(console))
+              .pipe(out);
+          } catch (error) {
+            console.log(error);
+          }
+          // let utteranceStream;
+          // let file;
 
-          connection.on('speaking', async (user, isSpeaking) => {
-            if (isSpeaking) {
-              console.log(`${user.tag} started speaking`);
-              // Create a temp stream to store the current utterance
-              utteranceStream = new Transform({
-                transform(chunk, encoding, callback) {
-                  this.push(chunk);
-                  callback();
-                },
-              });
-              // Start sending the voice stream there
-              voiceStream.pipe(utteranceStream);
-            } else {
-              console.log(`${user.tag} stopped speaking`);
-              if (utteranceStream) {
-                // Stop sending the voice stream into the utterance
-                voiceStream.unpipe(utteranceStream);
-                // End the utterance stream
-                utteranceStream.end();
-                // Echo through Discord
-                connection.play(utteranceStream, {
-                  type: 'opus',
-                  volume: false,
-                });
-                try {
-                  const resp = await recogniser.sendStream(utteranceStream);
-                  console.log('bing resp', resp);
-                  // console.log(recogniser.telemetry);
-                } catch (err) {
-                  console.log('bing err', err);
-                }
-              }
-            }
-          });
+          // connection.on('speaking', async (user, isSpeaking) => {
+          // if (isSpeaking) {
+          // console.log(`${user.tag} started speaking`);
+          // // Create a temp stream to store the current utterance
+          // // utteranceStream = new Transform({
+          // // transform(chunk, encoding, callback) {
+          // // this.push(chunk);
+          // // callback();
+          // // },
+          // // });
+          // file = fs.createWriteStream('./audiodata.pcm');
+          // // Start sending the voice stream there
+          // voiceStream.pipe(file);
+          // } else {
+          // console.log(`${user.tag} stopped speaking`);
+          // if (file) {
+          // voiceStream.unpipe(file);
+          // file.end();
+          // connection.playFile('./audiodata.pcm');
+          // }
+          // if (utteranceStream) {
+          // // Stop sending the voice stream into the utterance
+          // voiceStream.unpipe(utteranceStream);
+          // // End the utterance stream
+          // utteranceStream.end();
+
+          // connection.playFile('./audiodata.pcm');
+
+          // try {
+          // const resp = await recogniser.sendStream(utteranceStream);
+          // console.log('bing resp', resp);
+          // // console.log(recogniser.telemetry);
+          // } catch (err) {
+          // console.log('bing err', err);
+          // }
+          // }
+          // }
+          // });
         } else {
           message.react('👎');
         }
@@ -97,10 +124,6 @@ async function main() {
     }
   });
 
-  recogniser.on('recognition', e => {
-    console.log(e);
-  });
-
   // Start the Discord bot
   bot.login(process.env.DISCORD_BOT_TOKEN);
 
@@ -108,6 +131,15 @@ async function main() {
   try {
     await recogniser.start();
     console.log('> Recogniser ready');
+    recogniser.on('recognition', e => {
+      console.log(e);
+    });
+    recogniser.on('close', () => {
+      console.log('Speech API connection closed');
+    });
+    recogniser.on('error', error => {
+      console.log(error);
+    });
   } catch (error) {
     console.error('> Error connecting to Bing', error);
   }

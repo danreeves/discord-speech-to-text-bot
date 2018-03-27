@@ -6,17 +6,15 @@
     "start": "node bot.js"
   },
   "dependencies": {
-    "bufferutil": "^3.0.3",
-    "discord.js": "github:discordjs/discord.js",
-    "dotenv": "^5.0.0",
-    "erlpack": "github:hammerandchisel/erlpack",
+    "discord.js": "11.3.2",
+    "dotenv": "^5.0.1",
+    "erlpack": "github:discordapp/erlpack",
     "ffmpeg-binaries": "^3.2.2-3",
+    "fluent-ffmpeg": "^2.1.2",
+    "libsodium-wrappers": "^0.7.3",
     "ms-bing-speech-service": "^2.0.2",
-    "node-opus": "^0.2.7",
-    "ogg": "^1.2.5",
-    "prism-media": "^0.1.0",
-    "sodium": "^2.0.3",
-    "speaker": "^0.4.0",
+    "opusscript": "0.0.6",
+    "prism-media": "^0.2.0",
     "uws": "^9.14.0"
   },
   "engines": {
@@ -24,7 +22,7 @@
   },
   "devDependencies": {
     "eslint-config-prettier": "^2.9.0",
-    "prettier": "^1.10.2",
+    "prettier": "^1.11.1",
     "xo": "^0.20.3"
   },
   "prettier": {
